@@ -4,7 +4,7 @@ from apps.ethereum import networks
 
 async def ethereum_get_address(ctx, msg):
     from trezor.messages.EthereumAddress import EthereumAddress
-    from trezor.crypto.curve import secp256k1
+    from trezor.crypto.curve import secp256k1_zkp
     from trezor.crypto.hashlib import sha3_256
     from apps.common import seed
 
@@ -13,7 +13,7 @@ async def ethereum_get_address(ctx, msg):
     node = await seed.derive_node(ctx, address_n)
 
     seckey = node.private_key()
-    public_key = secp256k1.publickey(seckey, False)  # uncompressed
+    public_key = secp256k1_zkp.publickey(seckey, False)  # uncompressed
     address = sha3_256(public_key[1:], keccak=True).digest()[12:]
 
     if msg.show_display:

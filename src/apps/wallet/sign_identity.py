@@ -111,7 +111,7 @@ def sign_challenge(
     from trezor.crypto.hashlib import sha256
 
     if curve == "secp256k1":
-        from trezor.crypto.curve import secp256k1
+        from trezor.crypto.curve import secp256k1_zkp
     elif curve == "nist256p1":
         from trezor.crypto.curve import nist256p1
     elif curve == "ed25519":
@@ -133,7 +133,7 @@ def sign_challenge(
         data = message_digest(sigtype, challenge)
 
     if curve == "secp256k1":
-        signature = secp256k1.sign(seckey, data)
+        signature = secp256k1_zkp.sign(seckey, data)
     elif curve == "nist256p1":
         signature = nist256p1.sign(seckey, data)
     elif curve == "ed25519":

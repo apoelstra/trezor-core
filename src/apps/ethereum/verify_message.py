@@ -1,6 +1,6 @@
 from ubinascii import hexlify
 
-from trezor.crypto.curve import secp256k1
+from trezor.crypto.curve import secp256k1_zkp
 from trezor.crypto.hashlib import sha3_256
 from trezor.messages.Success import Success
 from trezor.ui.text import Text
@@ -15,7 +15,7 @@ async def ethereum_verify_message(ctx, msg):
 
     digest = message_digest(msg.message)
     sig = bytearray([msg.signature[64]]) + msg.signature[:64]
-    pubkey = secp256k1.verify_recover(sig, digest)
+    pubkey = secp256k1_zkp.verify_recover(sig, digest)
 
     if not pubkey:
         raise ValueError("Invalid signature")

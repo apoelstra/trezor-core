@@ -1,4 +1,4 @@
-from trezor.crypto.curve import secp256k1
+from trezor.crypto.curve import secp256k1_zkp
 from trezor.crypto.hashlib import sha3_256
 from trezor.messages.EthereumMessageSignature import EthereumMessageSignature
 from trezor.ui.text import Text
@@ -27,7 +27,7 @@ async def ethereum_sign_message(ctx, msg):
     address_n = msg.address_n or ()
     node = await seed.derive_node(ctx, address_n)
 
-    signature = secp256k1.sign(node.private_key(), message_digest(msg.message), False)
+    signature = secp256k1_zkp.sign(node.private_key(), message_digest(msg.message), False)
 
     sig = EthereumMessageSignature()
     sig.address = node.ethereum_pubkeyhash()

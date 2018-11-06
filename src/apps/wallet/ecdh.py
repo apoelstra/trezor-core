@@ -51,9 +51,9 @@ def get_ecdh_path(identity: str, index: int):
 
 def ecdh(seckey: bytes, peer_public_key: bytes, curve: str) -> bytes:
     if curve == "secp256k1":
-        from trezor.crypto.curve import secp256k1
+        from trezor.crypto.curve import secp256k1_zkp
 
-        session_key = secp256k1.multiply(seckey, peer_public_key)
+        session_key = secp256k1_zkp.multiply(seckey, peer_public_key)
     elif curve == "nist256p1":
         from trezor.crypto.curve import nist256p1
 
