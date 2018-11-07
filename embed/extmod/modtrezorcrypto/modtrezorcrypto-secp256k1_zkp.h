@@ -22,6 +22,7 @@
 #include "ecdsa.h"
 #include "secp256k1.h"
 #include "secp256k1_zkp.h"
+#include "secp256k1_ecdh.h"
 #include "secp256k1_preallocated.h"
 #include "secp256k1_recovery.h"
 
@@ -134,7 +135,7 @@ STATIC mp_obj_t mod_trezorcrypto_secp256k1_zkp_verify(mp_obj_t public_key, mp_ob
     }
     secp256k1_pubkey ec_pk;
     if (!secp256k1_ec_pubkey_parse(ctx, &ec_pk, (const uint8_t *)pk.buf, pk.len)) {
-        mp_raise_ValueError("Invalid signature");
+        mp_raise_ValueError("Invalid public key");
     }
     return mp_obj_new_bool(1 == secp256k1_ecdsa_verify(ctx, &ec_sig, (const uint8_t *)dig.buf, &ec_pk));
 }
@@ -180,12 +181,21 @@ STATIC mp_obj_t mod_trezorcrypto_secp256k1_zkp_verify_recover(mp_obj_t signature
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_trezorcrypto_secp256k1_zkp_verify_recover_obj, mod_trezorcrypto_secp256k1_zkp_verify_recover);
 
+static int secp256k1_ecdh_hash_passthrough(uint8_t *output, const uint8_t *x, const uint8_t *y, void *data) {
+    output[0] = 0x04;
+    memcpy(&output[1], x, 32);
+    memcpy(&output[33], y, 32);
+    (void) data;
+    return 1;
+}
+
 /// def multiply(secret_key: bytes, public_key: bytes) -> bytes:
 ///     '''
 ///     Multiplies point defined by public_key with scalar defined by secret_key.
 ///     Useful for ECDH.
 ///     '''
 STATIC mp_obj_t mod_trezorcrypto_secp256k1_zkp_multiply(mp_obj_t secret_key, mp_obj_t public_key) {
+    const secp256k1_context *ctx = mod_trezorcrypto_secp256k1_context();
     mp_buffer_info_t sk, pk;
     mp_get_buffer_raise(secret_key, &sk, MP_BUFFER_READ);
     mp_get_buffer_raise(public_key, &pk, MP_BUFFER_READ);
@@ -195,8 +205,12 @@ STATIC mp_obj_t mod_trezorcrypto_secp256k1_zkp_multiply(mp_obj_t secret_key, mp_
     if (pk.len != 33 && pk.len != 65) {
         mp_raise_ValueError("Invalid length of public key");
     }
+    secp256k1_pubkey ec_pk;
+    if (!secp256k1_ec_pubkey_parse(ctx, &ec_pk, (const uint8_t *)pk.buf, pk.len)) {
+        mp_raise_ValueError("Invalid public key");
+    }
     uint8_t out[65];
-    if (0 != ecdh_multiply(&secp256k1, (const uint8_t *)sk.buf, (const uint8_t *)pk.buf, out)) {
+    if (!secp256k1_ecdh(ctx, out, &ec_pk, (const uint8_t *)sk.buf, secp256k1_ecdh_hash_passthrough, NULL)) {
         mp_raise_ValueError("Multiply failed");
     }
     return mp_obj_new_bytes(out, sizeof(out));
