@@ -110,6 +110,30 @@ class TestCryptoSecp256k1(unittest.TestCase):
                 pk2 = secp256k1_zkp.verify_recover(sig, dig)
                 self.assertEqual(pk, pk2)
 
+    def test_ecdh(self):
+        for _ in range(100):
+            sk1 = secp256k1_zkp.generate_secret()
+            pk1 = secp256k1_zkp.publickey(sk1, False)
+            sk2 = secp256k1_zkp.generate_secret()
+            pk2 = secp256k1_zkp.publickey(sk2, True)
+            self.assertEqual(secp256k1_zkp.multiply(sk1, pk2), secp256k1_zkp.multiply(sk2, pk1))
+
+        (sk, pk) = self.vectors[0]
+        sk = hex(sk)[2:]
+        if len(sk) < 64:
+            sk = '0' * (64 - len(sk)) + sk
+        sk = unhexlify(sk)
+        pk = pk.lower()
+        pk33 = secp256k1_zkp.publickey(sk)
+        pk65 = secp256k1_zkp.publickey(sk, False)
+
+        fixed_vector_hex = b"0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+        fixed_vector1 = secp256k1_zkp.multiply(sk, pk65)
+        fixed_vector2 = secp256k1_zkp.multiply(sk, pk33)
+        self.assertEqual(fixed_vector1, fixed_vector2)
+        self.assertEqual(hexlify(fixed_vector1), fixed_vector_hex)
+
+
 
 if __name__ == '__main__':
     unittest.main()
